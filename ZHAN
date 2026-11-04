@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>ZAHN - POS & Billing</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+    <style>
+        :root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+        body { background-color: #070d14; color: #dfbf75; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; }
+        .bg-card { background-color: #0b1420; }
+        .text-gold { color: #c59f51; }
+        .border-gold { border-color: #c59f51; }
+        .bg-gold { background-color: #c59f51; color: #070d14; }
+        .bg-gold:hover { background-color: #dfbf75; }
+        .field { background-color: #070d14; border: 1px solid #c59f51; color: #fff; padding: 8px; border-radius: 4px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #070d14; }
+        ::-webkit-scrollbar-thumb { background: #c59f51; border-radius: 4px; }
+        .table-wrap { overflow-x: auto; }
+        @media print {
+            body { background-color: white; color: black; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const LOGO_SRC = 'data:image/jpeg;base64,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';
+        const ML_SIZES = [10, 20, 30, 50, 80, 100];
+        const EXPENSE_CATEGORIES = ['Rent', 'Salaries', 'Utilities', 'Transport', 'Marketing', 'Maintenance', 'Other'];
+
+        const loadData = (key, fallback) => {
+            try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+            catch (e) { return fallback; }
+        };
+        const saveData = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} };
+
+        const dayKey = (d) => new Date(d).toLocaleDateString('en-CA');
+        const monthKey = (d) => dayKey(d).slice(0, 7);
+        const todayKey = () => dayKey(new Date());
+        const firstOfMonthKey = () => todayKey().slice(0, 8) + '01';
+        const r2 = (n) => Math.round((n || 0) * 100) / 100;
+        const fmt = (n) => 'SAR ' + r2(n).toFixed(2);
+        const pct = (n) => (n || 0).toFixed(1) + '%';
+        const mlLabel = (ml) => ml ? `${ml} ML` : '';
+        const itemLabel = (name, ml) => ml ? `${name} ${ml} ML` : name;
+
+        const encodeInvoice = (sale) => btoa(unescape(encodeURIComponent(JSON.stringify(sale))));
+        const decodeInvoice = (s) => { try { return JSON.parse(decodeURIComponent(escape(atob(s)))); } catch (e) { return null; } };
+        const invoiceLink = (sale) => `${location.origin}${location.pathname}#inv=${encodeInvoice(sale)}`;
+
+        // Sales + returns summary. Returns reduce revenue and profit.
+        const summarize = (sales, returns = []) => {
+            const revenue = sales.reduce((s, x) => s + x.totalAmount, 0);
+            const cost = sales.reduce((s, x) => s + x.items.reduce((a, i) => a + (i.cost || 0) * i.qty, 0), 0);
+            const units = sales.reduce((s, x) => s + x.items.reduce((a, i) => a + i.qty, 0), 0);
+            const retRev = returns.reduce((s, r) => s + r.refund, 0);
+            const retCost = returns.reduce((s, r) => s + r.cost, 0);
+            const retUnits = returns.reduce((s, r) => s + r.qty, 0);
+            const netSales = revenue - retRev;
+            const profit = (revenue - cost) - (retRev - retCost);
+            return { count: sales.length, revenue, cost, units, retRev, retCost, retUnits, netSales, profit, margin: netSales ? profit / netSales * 100 : 0 };
+        };
+
+        const aggregateByProduct = (sales, returns = []) => {
+            const map = {};
+            const get = (name, ml) => { const k = name + '|' + ml; return map[k] || (map[k] = { name, ml, qty: 0, revenue: 0, cost: 0 }); };
+            sales.forEach(s => s.items.forEach(i => { const p = get(i.name, i.ml); p.qty += i.qty; p.revenue += i.price * i.qty; p.cost += (i.cost || 0) * i.qty; }));
+            returns.forEach(r => { const p = get(r.name, r.ml); p.qty -= r.qty; p.revenue -= r.refund; p.cost -= r.cost; });
+            return Object.values(map)
+                .map(p => ({ ...p, profit: p.revenue - p.cost, margin: p.revenue ? (p.revenue - p.cost) / p.revenue * 100 : 0 }))
+                .sort((a, b) => b.profit - a.profit);
+        };
+
+        const groupBy = (sales, returns, keyFn) => {
+            const map = {};
+            const slot = (k) => map[k] || (map[k] = { s: [], r: [] });
+            sales.forEach(s => slot(keyFn(s.date)).s.push(s));
+            returns.forEach(r => slot(keyFn(r.date)).r.push(r));
+            return Object.keys(map).sort().map(k => ({ key: k, ...summarize(map[k].s, map[k].r) }));
+        };
+
+        const downloadCSV = (filename, rows) => {
+            const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename; a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        };
+
+        const Card = ({ label, value, color = 'text-white' }) => (
+            <div className="bg-card border border-gold p-4 rounded text-center">
+                <p className="opacity-80 mb-2 text-sm">{label}</p>
+                <h4 className={`text-xl font-bold ${color}`}>{value}</h4>
+            </div>
+        );
+
+        const Table = ({ headers, rows, footer }) => (
+            <div className="table-wrap">
+                <table className="w-full text-left text-sm">
+                    <thead>
+                        <tr className="border-b border-gold">
+                            {headers.map((h, i) => <th key={i} className={`py-2 pr-3 ${i > 0 ? 'text-right' : ''}`}>{h}</th>)}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows.length === 0 && <tr><td colSpan={headers.length} className="py-4 text-center opacity-60">No records for this period.</td></tr>}
+                        {rows.map((r, i) => (
+                            <tr key={i} className="border-b border-gray-800">
+                                {r.map((c, j) => <td key={j} className={`py-2 pr-3 ${j > 0 ? 'text-right' : ''}`}>{c}</td>)}
+                            </tr>
+                        ))}
+                    </tbody>
+                    {footer && <tfoot><tr className="border-t-2 border-gold font-bold">{footer.map((c, j) => <td key={j} className={`py-2 pr-3 ${j > 0 ? 'text-right' : ''}`}>{c}</td>)}</tr></tfoot>}
+                </table>
+            </div>
+        );
+
+        const DateInput = ({ value, onChange, type = 'date' }) => (
+            <input type={type} className="field" value={value} onChange={e => onChange(e.target.value)} />
+        );
+
+        const DailyReport = ({ sales, returns, expenses }) => {
+            const [date, setDate] = useState(todayKey());
+            const list = sales.filter(s => dayKey(s.date) === date).slice().reverse();
+            const rets = returns.filter(r => dayKey(r.date) === date);
+            const t = summarize(list, rets);
+            const expList = expenses.filter(e => e.date === date);
+            const exp = expList.reduce((s, e) => s + e.amount, 0);
+            const cash = list.filter(s => (s.payment || 'Cash') === 'Cash').reduce((a, s) => a + s.totalAmount, 0);
+            const card = list.filter(s => s.payment === 'Card').reduce((a, s) => a + s.totalAmount, 0);
+            return (
+                <div>
+                    <div className="flex flex-wrap gap-3 items-center justify-between mb-6">
+                        <div className="flex items-center gap-3"><label className="text-sm opacity-80">Date</label><DateInput value={date} onChange={setDate} /></div>
+                        <button onClick={() => downloadCSV(`ZAHN_Daily_${date}.csv`, [
+                            ['Time', 'Invoice', 'Customer', 'Payment', 'Items', 'Amount', 'Profit'],
+                            ...list.map(s => [new Date(s.date).toLocaleTimeString(), s.id, s.customerName, s.payment || 'Cash', s.items.map(i => `${itemLabel(i.name, i.ml)} x${i.qty}`).join('; '), s.totalAmount, s.profit])
+                        ])} className="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">Export CSV</button>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                        <Card label="Invoices" value={t.count} />
+                        <Card label="Units Sold" value={t.units} />
+                        <Card label="Gross Sales" value={fmt(t.revenue)} />
+                        <Card label="Returns" value={fmt(t.retRev)} color="text-red-400" />
+                        <Card label="Net Sales" value={fmt(t.netSales)} />
+                        <Card label="Gross Profit" value={fmt(t.profit)} color="text-green-400" />
+                        <Card label="Expenses" value={fmt(exp)} color="text-red-400" />
+                        <Card label="Net Profit" value={fmt(t.profit - exp)} color="text-green-400" />
+                        <Card label="Cash / Card" value={`${fmt(cash)} / ${fmt(card)}`} />
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-card border border-gold p-5 rounded">
+                            <h4 className="font-bold text-lg mb-3 text-gold">Sales</h4>
+                            <Table headers={['Time / Customer', 'Items', 'Amount', 'Profit']}
+                                rows={list.map(s => [
+                                    <span>{new Date(s.date).toLocaleTimeString()}<br/><span className="opacity-70">{s.customerName} · {s.payment || 'Cash'}</span></span>,
+                                    s.items.map(i => `${itemLabel(i.name, i.ml)} x${i.qty}`).join(', '),
+                                    fmt(s.totalAmount),
+                                    <span className="text-green-400">{fmt(s.profit)}</span>])}
+                                footer={['Total', '', fmt(t.revenue), fmt(t.profit)]} />
+                        </div>
+                        <div className="bg-card border border-gold p-5 rounded">
+                            <h4 className="font-bold text-lg mb-3 text-gold">Returns</h4>
+                            <Table headers={['Item', 'Qty', 'Refund']}
+                                rows={rets.map(r => [itemLabel(r.name, r.ml), r.qty, <span className="text-red-400">{fmt(r.refund)}</span>])}
+                                footer={['Total', t.retUnits, fmt(t.retRev)]} />
+                        </div>
+                        <div className="bg-card border border-gold p-5 rounded lg:col-span-2">
+                            <h4 className="font-bold text-lg mb-3 text-gold">Expenses</h4>
+                            <Table headers={['Category', 'Description', 'Amount']}
+                                rows={expList.map(e => [e.category, e.description || '-', <span className="text-red-400">{fmt(e.amount)}</span>])}
+                                footer={['Total', '', fmt(exp)]} />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const MonthEndReport = ({ sales, returns, purchases, products, expenses }) => {
+            const [month, setMonth] = useState(monthKey(new Date()));
+            const mSales = sales.filter(s => monthKey(s.date) === month);
+            const mRets = returns.filter(r => monthKey(r.date) === month);
+            const mPurch = purchases.filter(p => monthKey(p.date) === month);
+            const t = summarize(mSales, mRets);
+            const purchaseTotal = mPurch.reduce((s, p) => s + p.totalCost, 0);
+            const expList = expenses.filter(e => e.date.slice(0, 7) === month);
+            const exp = expList.reduce((s, e) => s + e.amount, 0);
+            const expCats = EXPENSE_CATEGORIES.map(c => ({ name: c, amount: expList.filter(e => e.category === c).reduce((s, e) => s + e.amount, 0) })).filter(c => c.amount > 0);
+            const stockValue = products.reduce((s, p) => s + p.stock * (p.cost || 0), 0);
+            const stockUnits = products.reduce((s, p) => s + p.stock, 0);
+            const daily = groupBy(mSales, mRets, d => dayKey(d));
+            const top = aggregateByProduct(mSales, mRets).slice(0, 10);
+            return (
+                <div>
+                    <div className="flex flex-wrap gap-3 items-center justify-between mb-6">
+                        <div className="flex items-center gap-3"><label className="text-sm opacity-80">Month</label><DateInput value={month} onChange={setMonth} type="month" /></div>
+                        <button onClick={() => downloadCSV(`ZAHN_MonthEnd_${month}.csv`, [
+                            ['Metric', 'Value (SAR)'],
+                            ['Gross sales', t.revenue], ['Returns', t.retRev], ['Net sales', t.netSales], ['Cost of goods (net)', t.cost - t.retCost],
+                            ['Gross profit', t.profit], ['Expenses', exp], ['Net profit', t.profit - exp],
+                            ['Purchases in month', purchaseTotal], ['Closing stock value (current)', stockValue],
+                            [], ['Date', 'Invoices', 'Gross sales', 'Returns', 'Profit'],
+                            ...daily.map(d => [d.key, d.count, d.revenue, d.retRev, d.profit])
+                        ])} className="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">Export CSV</button>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <Card label="Gross Sales" value={fmt(t.revenue)} />
+                        <Card label="Returns" value={fmt(t.retRev)} color="text-red-400" />
+                        <Card label="Net Sales" value={fmt(t.netSales)} />
+                        <Card label="Gross Profit" value={fmt(t.profit)} color="text-green-400" />
+                        <Card label="Expenses" value={fmt(exp)} color="text-red-400" />
+                        <Card label="Net Profit" value={fmt(t.profit - exp)} color="text-green-400" />
+                        <Card label="Margin" value={pct(t.margin)} color="text-gold" />
+                        <Card label="Purchases" value={fmt(purchaseTotal)} />
+                        <Card label="Invoices" value={t.count} />
+                        <Card label="Units Sold (net)" value={t.units - t.retUnits} />
+                        <Card label="Stock Value (Now)" value={`${fmt(stockValue)} · ${stockUnits} pcs`} color="text-gold" />
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-card border border-gold p-5 rounded">
+                            <h4 className="font-bold text-lg mb-3 text-gold">Daily Breakdown</h4>
+                            <Table headers={['Date', 'Invoices', 'Net Sales', 'Profit']}
+                                rows={daily.map(d => [d.key, d.count, fmt(d.netSales), <span className="text-green-400">{fmt(d.profit)}</span>])}
+                                footer={['Total', t.count, fmt(t.netSales), fmt(t.profit)]} />
+                        </div>
+                        <div className="bg-card border border-gold p-5 rounded">
+                            <h4 className="font-bold text-lg mb-3 text-gold">Top Products</h4>
+                            <Table headers={['Product', 'Qty', 'Revenue', 'Profit']}
+                                rows={top.map(p => [itemLabel(p.name, p.ml), p.qty, fmt(p.revenue), <span className="text-green-400">{fmt(p.profit)}</span>])} />
+                        </div>
+                        <div className="bg-card border border-gold p-5 rounded">
+                            <h4 className="font-bold text-lg mb-3 text-gold">Expenses by Category</h4>
+                            <Table headers={['Category', 'Amount']}
+                                rows={expCats.map(c => [c.name, <span className="text-red-400">{fmt(c.amount)}</span>])}
+                                footer={['Total', fmt(exp)]} />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ProfitReport = ({ sales, returns, expenses }) => {
+            const [from, setFrom] = useState(firstOfMonthKey());
+            const [to, setTo] = useState(todayKey());
+            const inRange = (d) => dayKey(d) >= from && dayKey(d) <= to;
+            const list = sales.filter(s => inRange(s.date));
+            const rets = returns.filter(r => inRange(r.date));
+            const t = summarize(list, rets);
+            const exp = expenses.filter(e => e.date >= from && e.date <= to).reduce((s, e) => s + e.amount, 0);
+            const byProduct = aggregateByProduct(list, rets);
+            const byMonth = groupBy(sales, returns, d => monthKey(d));
+            return (
+                <div>
+                    <div className="flex flex-wrap gap-3 items-center justify-between mb-6">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <label className="text-sm opacity-80">From</label><DateInput value={from} onChange={setFrom} />
+                            <label className="text-sm opacity-80">To</label><DateInput value={to} onChange={setTo} />
+                        </div>
+                        <button onClick={() => downloadCSV(`ZAHN_Profit_${from}_to_${to}.csv`, [
+                            ['Product', 'Qty', 'Revenue', 'Cost', 'Profit', 'Margin %'],
+                            ...byProduct.map(p => [itemLabel(p.name, p.ml), p.qty, p.revenue, p.cost, p.profit, p.margin.toFixed(1)]),
+                            [], ['Month', 'Net sales', 'Gross profit', 'Margin %'],
+                            ...byMonth.map(m => [m.key, m.netSales, m.profit, m.margin.toFixed(1)])
+                        ])} className="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">Export CSV</button>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                        <Card label="Net Sales" value={fmt(t.netSales)} />
+                        <Card label="Gross Profit" value={fmt(t.profit)} color="text-green-400" />
+                        <Card label="Expenses" value={fmt(exp)} color="text-red-400" />
+                        <Card label="Net Profit" value={fmt(t.profit - exp)} color="text-green-400" />
+                        <Card label="Margin" value={pct(t.margin)} color="text-gold" />
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-card border border-gold p-5 rounded">
+                            <h4 className="font-bold text-lg mb-3 text-gold">Profit by Product</h4>
+                            <Table headers={['Product', 'Qty', 'Profit', 'Margin']}
+                                rows={byProduct.map(p => [itemLabel(p.name, p.ml), p.qty, <span className="text-green-400">{fmt(p.profit)}</span>, pct(p.margin)])} />
+                        </div>
+                        <div className="bg-card border border-gold p-5 rounded">
+                            <h4 className="font-bold text-lg mb-3 text-gold">Profit by Month (all time)</h4>
+                            <Table headers={['Month', 'Net Sales', 'Gross Profit', 'Margin']}
+                                rows={byMonth.slice().reverse().map(m => [m.key, fmt(m.netSales), <span className="text-green-400">{fmt(m.profit)}</span>, pct(m.margin)])} />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ReturnsReport = ({ returns }) => {
+            const [from, setFrom] = useState(firstOfMonthKey());
+            const [to, setTo] = useState(todayKey());
+            const list = returns.filter(r => dayKey(r.date) >= from && dayKey(r.date) <= to).slice().reverse();
+            const total = list.reduce((s, r) => s + r.refund, 0);
+            const units = list.reduce((s, r) => s + r.qty, 0);
+            const byItem = {};
+            list.forEach(r => { const k = itemLabel(r.name, r.ml); byItem[k] = byItem[k] || { name: k, qty: 0, refund: 0 }; byItem[k].qty += r.qty; byItem[k].refund += r.refund; });
+            return (
+                <div>
+                    <div className="flex flex-wrap gap-3 items-center justify-between mb-6">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <label className="text-sm opacity-80">From</label><DateInput value={from} onChange={setFrom} />
+                            <label className="text-sm opacity-80">To</label><DateInput value={to} onChange={setTo} />
+                        </div>
+                        <button onClick={() => downloadCSV(`ZAHN_Returns_${from}_to_${to}.csv`, [
+                            ['Date', 'Item', 'Qty', 'Refund', 'Reason'],
+                            ...list.map(r => [new Date(r.date).toLocaleString(), itemLabel(r.name, r.ml), r.qty, r.refund, r.reason || ''])
+                        ])} className="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">Export CSV</button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                        <Card label="Returned Units" value={units} />
+                        <Card label="Total Refunded" value={fmt(total)} color="text-red-400" />
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-card border border-gold p-5 rounded">
+                            <h4 className="font-bold text-lg mb-3 text-gold">By Item</h4>
+                            <Table headers={['Item', 'Qty', 'Refund']}
+                                rows={Object.values(byItem).map(i => [i.name, i.qty, fmt(i.refund)])} />
+                        </div>
+                        <div className="bg-card border border-gold p-5 rounded">
+                            <h4 className="font-bold text-lg mb-3 text-gold">Return History</h4>
+                            <Table headers={['Date / Item', 'Reason', 'Refund']}
+                                rows={list.map(r => [<span>{new Date(r.date).toLocaleDateString()}<br/><span className="opacity-70">{itemLabel(r.name, r.ml)} x{r.qty}</span></span>, r.reason || '-', fmt(r.refund)])} />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ReportsView = ({ sales, returns, purchases, products, expenses }) => {
+            const [sub, setSub] = useState('daily');
+            const subs = [['daily', 'Daily'], ['month', 'Month-End'], ['profit', 'Profit'], ['returns', 'Returns']];
+            return (
+                <div>
+                    <div className="flex flex-wrap gap-2 mb-6">
+                        {subs.map(([k, label]) => (
+                            <button key={k} onClick={() => setSub(k)}
+                                className={`px-4 py-2 rounded font-semibold ${sub === k ? 'bg-gold text-black' : 'border border-gold text-gold hover:bg-gold hover:text-black'}`}>
+                                {label} Report
+                            </button>
+                        ))}
+                    </div>
+                    {sub === 'daily' && <DailyReport sales={sales} returns={returns} expenses={expenses} />}
+                    {sub === 'month' && <MonthEndReport sales={sales} returns={returns} purchases={purchases} products={products} expenses={expenses} />}
+                    {sub === 'profit' && <ProfitReport sales={sales} returns={returns} expenses={expenses} />}
+                    {sub === 'returns' && <ReturnsReport returns={returns} />}
+                </div>
+            );
+        };
+
+        const ExpensesView = ({ expenses, setExpenses }) => {
+            const [date, setDate] = useState(todayKey());
+            const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
+            const [description, setDescription] = useState('');
+            const [amount, setAmount] = useState('');
+            const add = () => {
+                const amt = parseFloat(amount);
+                if (!amt || amt <= 0) { alert('Enter a valid amount.'); return; }
+                setExpenses(prev => [...prev, { id: Date.now(), date, category, description, amount: amt }]);
+                setDescription(''); setAmount('');
+            };
+            const remove = (id) => { if (confirm('Delete this expense?')) setExpenses(prev => prev.filter(e => e.id !== id)); };
+            const list = expenses.slice().sort((a, b) => b.date.localeCompare(a.date));
+            const total = expenses.reduce((s, e) => s + e.amount, 0);
+            return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-card border border-gold p-6 rounded">
+                        <h3 className="text-xl mb-4 font-bold text-gold border-b border-gold pb-2">Add Expense</h3>
+                        <div className="space-y-4">
+                            <input type="date" className="field w-full" value={date} onChange={e => setDate(e.target.value)} />
+                            <select className="field w-full" value={category} onChange={e => setCategory(e.target.value)}>
+                                {EXPENSE_CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                            </select>
+                            <input type="text" placeholder="Description" className="field w-full" value={description} onChange={e => setDescription(e.target.value)} />
+                            <input type="number" placeholder="Amount (SAR)" className="field w-full" value={amount} onChange={e => setAmount(e.target.value)} />
+                            <button onClick={add} className="w-full bg-gold text-black font-bold py-2 rounded">SAVE EXPENSE</button>
+                        </div>
+                    </div>
+                    <div className="bg-card border border-gold p-6 rounded">
+                        <div className="flex justify-between items-center border-b border-gold pb-2 mb-4">
+                            <h3 className="text-xl font-bold text-gold">Expense History</h3>
+                            <span className="font-bold text-red-400">Total: {fmt(total)}</span>
+                        </div>
+                        <div className="overflow-auto h-[55vh]">
+                            {list.length === 0 && <p className="opacity-60">No expenses recorded yet.</p>}
+                            {list.map(e => (
+                                <div key={e.id} className="border-b border-gray-700 py-2 flex justify-between items-center gap-3">
+                                    <div>
+                                        <p className="font-bold">{e.category}{e.description ? ' - ' + e.description : ''}</p>
+                                        <p className="text-sm opacity-70">{e.date}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-red-400 font-bold">{fmt(e.amount)}</span>
+                                        <button onClick={() => remove(e.id)} className="text-red-400 text-sm border border-red-400 px-2 rounded">x</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ReturnsView = ({ products, setProducts, returns, setReturns }) => {
+            const [prodId, setProdId] = useState('');
+            const [qty, setQty] = useState('');
+            const [refund, setRefund] = useState('');
+            const [reason, setReason] = useState('');
+            const selected = products.find(p => p.id === prodId);
+            const submit = () => {
+                const q = parseInt(qty);
+                if (!selected) { alert('Select an item.'); return; }
+                if (!q || q <= 0) { alert('Enter a valid quantity.'); return; }
+                const amount = r2(parseFloat(refund)) || r2(selected.price * q);
+                setReturns(prev => [...prev, {
+                    id: Date.now(), date: new Date().toISOString(), productId: selected.id,
+                    name: selected.name, ml: selected.ml, qty: q, refund: amount,
+                    cost: r2((selected.cost || 0) * q), reason
+                }]);
+                setProducts(prev => prev.map(p => p.id === selected.id ? { ...p, stock: p.stock + q } : p));
+                setProdId(''); setQty(''); setRefund(''); setReason('');
+            };
+            return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-card border border-gold p-6 rounded">
+                        <h3 className="text-xl mb-4 font-bold text-gold border-b border-gold pb-2">Sales Return</h3>
+                        <div className="space-y-4">
+                            <select className="field w-full" value={prodId} onChange={e => { setProdId(e.target.value); setRefund(''); }}>
+                                <option value="">-- Select item --</option>
+                                {products.map(p => <option key={p.id} value={p.id}>{itemLabel(p.name, p.ml)} (SAR {p.price})</option>)}
+                            </select>
+                            <input type="number" placeholder="Quantity returned" className="field w-full" value={qty} onChange={e => setQty(e.target.value)} />
+                            <input type="number" placeholder={selected ? `Refund (default SAR ${r2(selected.price * (parseInt(qty) || 0))})` : 'Refund amount (SAR)'} className="field w-full" value={refund} onChange={e => setRefund(e.target.value)} />
+                            <input type="text" placeholder="Reason (optional)" className="field w-full" value={reason} onChange={e => setReason(e.target.value)} />
+                            <button onClick={submit} className="w-full bg-gold text-black font-bold py-2 rounded">SAVE RETURN & RESTOCK</button>
+                        </div>
+                    </div>
+                    <div className="bg-card border border-gold p-6 rounded">
+                        <h3 className="text-xl mb-4 font-bold text-gold border-b border-gold pb-2">Recent Returns</h3>
+                        <div className="overflow-auto h-[55vh]">
+                            {returns.length === 0 && <p className="opacity-60">No returns yet.</p>}
+                            {returns.slice().reverse().map(r => (
+                                <div key={r.id} className="border-b border-gray-700 py-2 flex justify-between">
+                                    <div>
+                                        <p className="font-bold">{itemLabel(r.name, r.ml)} x{r.qty}</p>
+                                        <p className="text-sm opacity-70">{new Date(r.date).toLocaleString()}{r.reason ? ' · ' + r.reason : ''}</p>
+                                    </div>
+                                    <span className="text-red-400 font-bold">{fmt(r.refund)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Logo = () => LOGO_SRC ? (
+            <div className="flex flex-col items-center py-4"><img src={LOGO_SRC} alt="ZAHN" style={{maxHeight: 90}} /></div>
+        ) : <LogoMark />;
+
+        const LogoMark = () => (
+            <div className="flex flex-col items-center justify-center py-4">
+                <h1 className="text-3xl font-bold tracking-[0.2em] mt-2 text-[#c59f51]" style={{fontFamily: 'serif'}}>ZAHN</h1>
+                <p className="text-xs tracking-[0.3em] text-[#dfbf75]">ESSENCE OF YOU</p>
+            </div>
+        );
+
+        const InvoiceView = ({ sale }) => (
+            <div className="min-h-screen p-6 flex justify-center">
+                <div className="bg-white text-black w-full max-w-md p-6 rounded">
+                    <Logo />
+                    <div className="text-center mb-4">
+                        <h2 className="text-xl font-bold">TAX INVOICE</h2>
+                        <p className="text-sm">Date: {new Date(sale.date).toLocaleString()}</p>
+                    </div>
+                    <div className="mb-4 text-sm">
+                        <p><strong>Customer:</strong> {sale.customerName}</p>
+                        {sale.customerPhone && <p><strong>Phone:</strong> {sale.customerPhone}</p>}
+                        <p><strong>Invoice No:</strong> #{sale.id}</p>
+                        <p><strong>Payment:</strong> {sale.payment || 'Cash'}</p>
+                    </div>
+                    <table className="w-full text-left text-sm mb-4">
+                        <thead>
+                            <tr className="border-b-2 border-black"><th className="py-1">Item</th><th>Qty</th><th>Price</th><th className="text-right">Total</th></tr>
+                        </thead>
+                        <tbody>
+                            {sale.items.map((i, idx) => (
+                                <tr key={idx} className="border-b border-gray-300"><td className="py-1">{itemLabel(i.name, i.ml)}</td><td>{i.qty}</td><td>{i.price}</td><td className="text-right">{i.price * i.qty}</td></tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {sale.discount > 0 && <div className="flex justify-between text-sm"><span>Subtotal</span><span>SAR {sale.subtotal}</span></div>}
+                    {sale.discount > 0 && <div className="flex justify-between text-sm"><span>Discount</span><span>- SAR {sale.discount}</span></div>}
+                    <div className="flex justify-between font-bold text-xl border-t-2 border-black pt-2 mt-2"><span>Grand Total</span><span>SAR {sale.totalAmount}</span></div>
+                    <p className="text-center text-sm mt-6">Thank you for shopping with ZAHN!</p>
+                </div>
+            </div>
+        );
+
+        const App = () => {
+            const sharedSale = (() => { const m = location.hash.match(/inv=([^&]+)/); return m ? decodeInvoice(m[1]) : null; })();
+            const [activeTab, setActiveTab] = useState('pos');
+            const [products, setProducts] = useState(() => loadData('zahn_products', []));
+            const [sales, setSales] = useState(() => loadData('zahn_sales', []));
+            const [purchases, setPurchases] = useState(() => loadData('zahn_purchases', []));
+            const [expenses, setExpenses] = useState(() => loadData('zahn_expenses', []));
+            const [returns, setReturns] = useState(() => loadData('zahn_returns', []));
+
+            const [cart, setCart] = useState([]);
+            const [pickName, setPickName] = useState(null);
+            const [customerName, setCustomerName] = useState('');
+            const [customerPhone, setCustomerPhone] = useState('');
+            const [payment, setPayment] = useState('Cash');
+            const [discount, setDiscount] = useState('');
+            const [discountType, setDiscountType] = useState('amount');
+            const [billToPrint, setBillToPrint] = useState(null);
+            const [waSale, setWaSale] = useState(null);
+
+            const [pName, setPName] = useState('');
+            const [pMl, setPMl] = useState('');
+            const [pCost, setPCost] = useState('');
+            const [pPrice, setPPrice] = useState('');
+            const [pQty, setPQty] = useState('');
+            const [bName, setBName] = useState('');
+            const [bMl, setBMl] = useState('');
+            const [bCost, setBCost] = useState('');
+            const [bCounts, setBCounts] = useState({});
+            const [bPrices, setBPrices] = useState({});
+            const [editPurchase, setEditPurchase] = useState(null);
+
+            const addBulk = () => {
+                const name = bName.trim();
+                const totalMl = parseFloat(bMl) || 0;
+                const totalCost = parseFloat(bCost) || 0;
+                if (!name) { alert('Enter product name.'); return; }
+                if (totalMl <= 0 || totalCost <= 0) { alert('Enter total ML and total cost.'); return; }
+                const lines = ML_SIZES.map(ml => ({ ml, count: parseInt(bCounts[ml]) || 0, price: parseFloat(bPrices[ml]) || 0 })).filter(x => x.count > 0);
+                if (lines.length === 0) { alert('Enter bottle count for at least one size.'); return; }
+                const usedMl = lines.reduce((s, x) => s + x.ml * x.count, 0);
+                if (usedMl > totalMl) { alert(`Bottles need ${usedMl} ML but only ${totalMl} ML was bought.`); return; }
+                const costPerMl = totalCost / totalMl;
+                const now = new Date().toISOString();
+                setProducts(prev => {
+                    const arr = [...prev];
+                    lines.forEach(({ ml, count, price }) => {
+                        const unitCost = r2(costPerMl * ml);
+                        const idx = arr.findIndex(p => p.name.toLowerCase() === name.toLowerCase() && p.ml === ml);
+                        if (idx >= 0) arr[idx] = { ...arr[idx], stock: arr[idx].stock + count, cost: unitCost, price: price || arr[idx].price };
+                        else arr.push({ id: (Date.now() + ml).toString(), name, ml, cost: unitCost, price, stock: count });
+                    });
+                    return arr;
+                });
+                setPurchases(prev => [...prev, ...lines.map(({ ml, count }) => ({
+                    id: Date.now() + ml, date: now, productName: name, ml, qty: count, totalCost: r2(count * costPerMl * ml)
+                }))]);
+                setBName(''); setBMl(''); setBCost(''); setBCounts({}); setBPrices({});
+            };
+
+            const startEdit = (p) => setEditPurchase({ id: p.id, name: p.productName, ml: p.ml, qty: String(p.qty), unitCost: String(p.qty ? r2(p.totalCost / p.qty) : 0) });
+
+            const saveEdit = () => {
+                const p = purchases.find(x => x.id === editPurchase.id);
+                if (!p) { setEditPurchase(null); return; }
+                const newQty = parseInt(editPurchase.qty);
+                const newCost = parseFloat(editPurchase.unitCost);
+                if (!newQty || newQty <= 0 || isNaN(newCost) || newCost < 0) { alert('Enter a valid quantity and cost.'); return; }
+                const diff = newQty - p.qty;
+                const prod = products.find(x => x.name === p.productName && x.ml === p.ml);
+                if (prod && prod.stock + diff < 0) { alert('Cannot reduce: some of these items are already sold.'); return; }
+                setPurchases(prev => prev.map(x => x.id === p.id ? { ...x, qty: newQty, totalCost: r2(newQty * newCost) } : x));
+                if (prod) setProducts(prev => prev.map(x => x.id === prod.id ? { ...x, stock: x.stock + diff, cost: newCost } : x));
+                setEditPurchase(null);
+            };
+
+            const deletePurchase = () => {
+                const p = purchases.find(x => x.id === editPurchase.id);
+                if (!p) { setEditPurchase(null); return; }
+                const prod = products.find(x => x.name === p.productName && x.ml === p.ml);
+                if (prod && prod.stock - p.qty < 0) { alert('Cannot delete: some of these items are already sold.'); return; }
+                if (!confirm('Delete this purchase and reduce stock?')) return;
+                setPurchases(prev => prev.filter(x => x.id !== p.id));
+                if (prod) setProducts(prev => prev.map(x => x.id === prod.id ? { ...x, stock: x.stock - p.qty } : x));
+                setEditPurchase(null);
+            };
+
+            useEffect(() => { saveData('zahn_products', products); }, [products]);
+            useEffect(() => { saveData('zahn_sales', sales); }, [sales]);
+            useEffect(() => { saveData('zahn_purchases', purchases); }, [purchases]);
+            useEffect(() => { saveData('zahn_expenses', expenses); }, [expenses]);
+            useEffect(() => { saveData('zahn_returns', returns); }, [returns]);
+
+            if (sharedSale) return <InvoiceView sale={sharedSale} />;
+
+            const addToCart = (product) => {
+                if (product.stock <= 0) { alert('Out of Stock!'); return; }
+                const existing = cart.find(item => item.id === product.id);
+                if (existing) {
+                    if (existing.qty >= product.stock) return;
+                    setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
+                } else {
+                    setCart([...cart, { id: product.id, name: product.name, ml: product.ml, price: product.price, cost: product.cost || 0, stock: product.stock, qty: 1 }]);
+                }
+            };
+            const removeFromCart = (id) => setCart(cart.filter(item => item.id !== id));
+
+            const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const rawDiscount = parseFloat(discount) || 0;
+            const discountValue = discountType === 'percent' ? subtotal * Math.min(rawDiscount, 100) / 100 : rawDiscount;
+            const discountAmt = r2(Math.min(subtotal, Math.max(0, discountValue)));
+            const cartTotal = r2(subtotal - discountAmt);
+
+            const sendWhatsApp = (sale) => {
+                let num = String(sale.customerPhone || '').replace(/\D/g, '');
+                if (num.startsWith('00')) num = num.slice(2);
+                else if (num.length === 10 && num.startsWith('05')) num = '966' + num.slice(1);
+                else if (num.length === 9 && num.startsWith('5')) num = '966' + num;
+                else if (num.length === 10) num = '91' + num;
+                else if (num.length === 11 && num.startsWith('0')) num = '91' + num.slice(1);
+                const lines = [
+                    '*ZAHN - Essence of You*',
+                    `Invoice #${sale.id}`,
+                    `Date: ${new Date(sale.date).toLocaleString()}`,
+                    '',
+                    ...sale.items.map(i => `${itemLabel(i.name, i.ml)} x${i.qty} = SAR ${i.price * i.qty}`),
+                    '',
+                    ...(sale.discount > 0 ? [`Subtotal: SAR ${sale.subtotal}`, `Discount: - SAR ${sale.discount}`] : []),
+                    `*Total: SAR ${sale.totalAmount}*`,
+                    `Payment: ${sale.payment || 'Cash'}`,
+                    `View invoice: ${invoiceLink(sale)}`,
+                    '',
+                    'Thank you for shopping with ZAHN!'
+                ];
+                return `https://wa.me/${num}?text=${encodeURIComponent(lines.join('\n'))}`;
+            };
+
+            const completeSale = () => {
+                if (cart.length === 0) return;
+                const sale = {
+                    id: Date.now(),
+                    date: new Date().toISOString(),
+                    customerName: customerName || 'Walk-in Customer',
+                    customerPhone,
+                    items: cart.map(i => ({ id: i.id, name: i.name, ml: i.ml, price: i.price, cost: i.cost, qty: i.qty })),
+                    subtotal,
+                    discount: discountAmt,
+                    payment,
+                    totalAmount: cartTotal,
+                    profit: r2(cartTotal - cart.reduce((s, i) => s + i.cost * i.qty, 0))
+                };
+                setSales(prev => [...prev, sale]);
+                setProducts(prev => prev.map(p => {
+                    const c = cart.find(x => x.id === p.id);
+                    return c ? { ...p, stock: p.stock - c.qty } : p;
+                }));
+                setBillToPrint(sale);
+                setWaSale(sale);
+                setCart([]); setCustomerName(''); setCustomerPhone(''); setDiscount(''); setPayment('Cash');
+                setTimeout(() => window.print(), 500);
+            };
+
+            const addPurchase = () => {
+                const qty = parseInt(pQty);
+                const name = pName.trim();
+                if (!name) { alert('Enter product name.'); return; }
+                if (!pMl) { alert('Select ML size.'); return; }
+                if (!qty || qty <= 0) { alert('Enter a valid quantity.'); return; }
+                const cost = parseFloat(pCost) || 0;
+                const price = parseFloat(pPrice) || 0;
+                const ml = Number(pMl);
+                const existing = products.find(p => p.name.toLowerCase() === name.toLowerCase() && p.ml === ml);
+                if (existing) {
+                    setProducts(prev => prev.map(p => p.id === existing.id ? { ...p, stock: p.stock + qty, cost: cost || p.cost, price: price || p.price } : p));
+                } else {
+                    setProducts(prev => [...prev, { id: Date.now().toString(), name, ml, cost, price, stock: qty }]);
+                }
+                setPurchases(prev => [...prev, { id: Date.now(), date: new Date().toISOString(), productName: name, ml, qty, totalCost: qty * cost }]);
+                setPName(''); setPMl(''); setPCost(''); setPPrice(''); setPQty('');
+            };
+
+            const names = [...new Set(products.map(p => p.name))];
+            const sizesFor = (name) => products.filter(p => p.name === name).sort((a, b) => (a.ml || 0) - (b.ml || 0));
+            const tabs = [['pos', 'Sales (POS)'], ['purchase', 'Purchase'], ['returns', 'Sales Return'], ['expenses', 'Expenses'], ['reports', 'Reports']];
+
+            return (
+                <div className="min-h-screen">
+                    <header className="bg-card border-b border-gold p-4 flex flex-wrap gap-3 justify-between items-center no-print">
+                        <div className="flex items-center gap-4">
+                            {LOGO_SRC ? <img src={LOGO_SRC} alt="ZAHN" className="h-14 w-14 object-contain rounded" /> : <h2 className="text-2xl font-bold tracking-widest text-gold" style={{fontFamily: 'serif'}}>ZAHN</h2>}
+                            <span className="text-xs tracking-widest opacity-70 border-l border-gold pl-4">POS SYSTEM</span>
+                        </div>
+                        <nav className="flex gap-2 flex-wrap">
+                            {tabs.map(([key, label]) => (
+                                <button key={key} onClick={() => setActiveTab(key)}
+                                    className={`px-4 py-2 rounded font-semibold ${activeTab === key ? 'bg-gold text-black' : 'border border-gold text-gold hover:bg-gold hover:text-black'}`}>
+                                    {label}
+                                </button>
+                            ))}
+                        </nav>
+                    </header>
+
+                    <main className="p-6 no-print">
+                        {activeTab === 'pos' && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="md:col-span-2">
+                                    <h3 className="text-xl mb-4 font-bold text-gold border-b border-gold pb-2">Select Products</h3>
+                                    {pickName && (
+                                        <div className="bg-card border border-gold p-4 rounded mb-6">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h4 className="font-bold text-gold">Select ML for {pickName}</h4>
+                                                <button onClick={() => setPickName(null)} className="text-sm border border-gold px-2 rounded">Cancel</button>
+                                            </div>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                {sizesFor(pickName).map(p => (
+                                                    <button key={p.id} disabled={p.stock <= 0} onClick={() => { addToCart(p); setPickName(null); }}
+                                                        className="border border-gold p-3 rounded text-left disabled:opacity-40 hover:bg-[#111f30]">
+                                                        <p className="font-bold">{p.ml ? `${p.ml} ML` : 'No size'}</p>
+                                                        <p className="text-sm opacity-70">Stock: {p.stock}</p>
+                                                        <p className="text-gold font-bold">SAR {p.price}</p>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {names.length === 0 ? <p className="text-gray-500">No products available. Add items in Purchase tab.</p> :
+                                            names.map(name => {
+                                                const total = sizesFor(name).reduce((s, p) => s + p.stock, 0);
+                                                return (
+                                                    <div key={name} onClick={() => setPickName(name)} className="bg-card border border-gold p-4 rounded cursor-pointer hover:bg-[#111f30] transition">
+                                                        <h4 className="font-bold text-lg">{name}</h4>
+                                                        <p className="text-sm opacity-70">Stock: {total} · {sizesFor(name).map(p => mlLabel(p.ml)).filter(Boolean).join(', ')}</p>
+                                                    </div>
+                                                );
+                                            })}
+                                    </div>
+                                </div>
+                                <div className="bg-card border border-gold p-4 rounded flex flex-col md:h-[80vh]">
+                                    <h3 className="text-xl mb-4 font-bold text-gold border-b border-gold pb-2">Current Bill</h3>
+                                    <div className="flex flex-col gap-2 mb-4">
+                                        <input type="text" placeholder="Customer Name (Optional)" className="field" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+                                        <input type="text" placeholder="Phone Number (Optional)" className="field" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
+                                    </div>
+                                    <div className="flex-1 overflow-auto">
+                                        {cart.map(item => (
+                                            <div key={item.id} className="flex justify-between items-center mb-2 border-b border-gray-700 pb-2">
+                                                <div>
+                                                    <p className="font-bold">{itemLabel(item.name, item.ml)}</p>
+                                                    <p className="text-sm opacity-70">{item.qty} x SAR {item.price}</p>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <p className="font-bold">SAR {item.qty * item.price}</p>
+                                                    <button onClick={() => removeFromCart(item.id)} className="text-red-400 text-sm border border-red-400 px-2 rounded">x</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-4 pt-4 border-t border-gold">
+                                        <div className="flex gap-2 mb-3">
+                                            <select className="field w-full" value={payment} onChange={e => setPayment(e.target.value)}>
+                                                <option value="Cash">Cash</option>
+                                                <option value="Card">Card</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex gap-2 mb-3">
+                                            <select className="field" value={discountType} onChange={e => setDiscountType(e.target.value)}>
+                                                <option value="amount">SAR</option>
+                                                <option value="percent">%</option>
+                                            </select>
+                                            <input type="number" min="0" placeholder="Discount" className="field w-full" value={discount} onChange={e => setDiscount(e.target.value)} />
+                                        </div>
+                                        {discountAmt > 0 && <div className="flex justify-between text-sm mb-1"><span>Subtotal</span><span>SAR {subtotal}</span></div>}
+                                        {discountAmt > 0 && <div className="flex justify-between text-sm mb-2 text-green-400"><span>Discount</span><span>- SAR {discountAmt}</span></div>}
+                                        <div className="flex justify-between text-xl font-bold mb-4">
+                                            <span>Total:</span>
+                                            <span className="text-gold">SAR {cartTotal}</span>
+                                        </div>
+                                        <button onClick={completeSale} disabled={cart.length === 0} className="w-full bg-gold text-black font-bold py-3 rounded hover:opacity-90 disabled:opacity-50">
+                                            COMPLETE SALE & PRINT
+                                        </button>
+                                        {waSale && waSale.customerPhone && (
+                                            <a href={sendWhatsApp(waSale)} target="_blank" rel="noopener noreferrer" className="block text-center w-full mt-3 bg-green-600 text-white font-bold py-2 rounded hover:bg-green-700">
+                                                SEND BILL ON WHATSAPP ({waSale.customerName})
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'purchase' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-card border border-gold p-6 rounded">
+                                    <h3 className="text-xl mb-4 font-bold text-gold border-b border-gold pb-2">Add Stock / New Purchase</h3>
+                                    <details className="mb-4 border border-gold p-3 rounded" open>
+                                        <summary className="font-bold text-gold cursor-pointer mb-3">Bulk Oil Purchase (Litre to Bottles)</summary>
+                                        <div className="space-y-3">
+                                            <input type="text" placeholder="Perfume Name" className="field w-full" value={bName} onChange={e => setBName(e.target.value)} />
+                                            <div className="flex gap-3">
+                                                <input type="number" placeholder="Total oil bought (ML)" className="field w-full" value={bMl} onChange={e => setBMl(e.target.value)} />
+                                                <input type="number" placeholder="Total cost (SAR)" className="field w-full" value={bCost} onChange={e => setBCost(e.target.value)} />
+                                            </div>
+                                            <p className="text-sm opacity-80">
+                                                Cost per ML: SAR {(parseFloat(bMl) > 0 && parseFloat(bCost) > 0) ? (parseFloat(bCost) / parseFloat(bMl)).toFixed(3) : '0'}
+                                                {' · '}Used: {ML_SIZES.reduce((s, m) => s + m * (parseInt(bCounts[m]) || 0), 0)} ML
+                                                {' · '}Left: {(parseFloat(bMl) || 0) - ML_SIZES.reduce((s, m) => s + m * (parseInt(bCounts[m]) || 0), 0)} ML
+                                            </p>
+                                            {ML_SIZES.map(ml => (
+                                                <div key={ml} className="flex gap-2 items-center">
+                                                    <span className="w-16 text-sm">{ml} ML</span>
+                                                    <input type="number" placeholder="Bottles" className="field w-full" value={bCounts[ml] || ''} onChange={e => setBCounts({ ...bCounts, [ml]: e.target.value })} />
+                                                    <input type="number" placeholder="Sell price" className="field w-full" value={bPrices[ml] || ''} onChange={e => setBPrices({ ...bPrices, [ml]: e.target.value })} />
+                                                </div>
+                                            ))}
+                                            <button onClick={addBulk} className="w-full bg-gold text-black font-bold py-2 rounded">ADD BULK PURCHASE</button>
+                                        </div>
+                                    </details>
+                                    <div className="space-y-4">
+                                        <input type="text" list="zahn-names" placeholder="Perfume Name" className="field w-full" value={pName} onChange={e => setPName(e.target.value)} />
+                                        <datalist id="zahn-names">{names.map(n => <option key={n} value={n} />)}</datalist>
+                                        <select className="field w-full" value={pMl} onChange={e => setPMl(e.target.value)}>
+                                            <option value="">-- Select ML --</option>
+                                            {ML_SIZES.map(m => <option key={m} value={m}>{m} ML</option>)}
+                                        </select>
+                                        <div className="flex flex-col sm:flex-row gap-4">
+                                            <input type="number" placeholder="Cost Price (SAR)" className="field w-full" value={pCost} onChange={e => setPCost(e.target.value)} />
+                                            <input type="number" placeholder="Selling Price (SAR)" className="field w-full" value={pPrice} onChange={e => setPPrice(e.target.value)} />
+                                        </div>
+                                        <input type="number" placeholder="Quantity Purchased" className="field w-full" value={pQty} onChange={e => setPQty(e.target.value)} />
+                                        <button onClick={addPurchase} className="w-full bg-gold text-black font-bold py-2 rounded">UPDATE STOCK</button>
+                                    </div>
+                                </div>
+                                <div className="bg-card border border-gold p-6 rounded">
+                                    <h3 className="text-xl mb-4 font-bold text-gold border-b border-gold pb-2">Purchase History</h3>
+                                    <div className="overflow-auto h-[60vh]">
+                                        {purchases.slice().reverse().map(p => (
+                                            <div key={p.id} className="border-b border-gray-700 py-2 flex justify-between">
+                                                <div>
+                                                    <p className="font-bold">{itemLabel(p.productName, p.ml)}</p>
+                                                    <p className="text-sm opacity-70">{new Date(p.date).toLocaleDateString()}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p>Qty: {p.qty}</p>
+                                                    <p className="text-gold font-bold">Total: SAR {p.totalCost}</p>
+                                                    <button onClick={() => startEdit(p)} className="text-sm border border-gold px-2 rounded mt-1">Edit</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'returns' && <ReturnsView products={products} setProducts={setProducts} returns={returns} setReturns={setReturns} />}
+                        {activeTab === 'expenses' && <ExpensesView expenses={expenses} setExpenses={setExpenses} />}
+                        {activeTab === 'reports' && <ReportsView sales={sales} returns={returns} purchases={purchases} products={products} expenses={expenses} />}
+                    </main>
+
+                    {editPurchase && (
+                        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 no-print z-50">
+                            <div className="bg-card border border-gold p-6 rounded w-full max-w-sm space-y-4">
+                                <h3 className="text-lg font-bold text-gold">Edit: {itemLabel(editPurchase.name, editPurchase.ml)}</h3>
+                                <label className="block text-sm opacity-80">Quantity</label>
+                                <input type="number" className="field w-full" value={editPurchase.qty} onChange={e => setEditPurchase({ ...editPurchase, qty: e.target.value })} />
+                                <label className="block text-sm opacity-80">Unit cost (SAR)</label>
+                                <input type="number" className="field w-full" value={editPurchase.unitCost} onChange={e => setEditPurchase({ ...editPurchase, unitCost: e.target.value })} />
+                                <div className="flex gap-2">
+                                    <button onClick={saveEdit} className="flex-1 bg-gold text-black font-bold py-2 rounded">Save</button>
+                                    <button onClick={() => setEditPurchase(null)} className="flex-1 border border-gold py-2 rounded">Cancel</button>
+                                </div>
+                                <button onClick={deletePurchase} className="w-full border border-red-400 text-red-400 py-2 rounded">Delete this purchase</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {billToPrint && (
+                        <div className="print-only p-8 bg-white text-black min-h-screen">
+                            <Logo />
+                            <div className="text-center mb-6">
+                                <h2 className="text-xl font-bold">TAX INVOICE</h2>
+                                <p className="text-sm">Riyadh, Saudi Arabia</p>
+                                <p className="text-sm">Date: {new Date(billToPrint.date).toLocaleString()}</p>
+                            </div>
+                            <div className="mb-6">
+                                <p><strong>Customer:</strong> {billToPrint.customerName}</p>
+                                {billToPrint.customerPhone && <p><strong>Phone:</strong> {billToPrint.customerPhone}</p>}
+                                <p><strong>Invoice No:</strong> #{billToPrint.id}</p>
+                                <p><strong>Payment:</strong> {billToPrint.payment || 'Cash'}</p>
+                            </div>
+                            <table className="w-full text-left mb-6 border-collapse">
+                                <thead>
+                                    <tr className="border-b-2 border-black">
+                                        <th className="py-2">Item Description</th>
+                                        <th>Qty</th>
+                                        <th>Price (SAR)</th>
+                                        <th className="text-right">Total (SAR)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {billToPrint.items.map((item, idx) => (
+                                        <tr key={idx} className="border-b border-gray-300">
+                                            <td className="py-2">{itemLabel(item.name, item.ml)}</td>
+                                            <td>{item.qty}</td>
+                                            <td>{item.price}</td>
+                                            <td className="text-right">{item.qty * item.price}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <div className="flex justify-end">
+                                <div className="w-1/2">
+                                    {billToPrint.discount > 0 && <div className="flex justify-between mb-1"><span>Subtotal:</span><span>SAR {billToPrint.subtotal}</span></div>}
+                                    {billToPrint.discount > 0 && <div className="flex justify-between mb-2"><span>Discount:</span><span>- SAR {billToPrint.discount}</span></div>}
+                                    <div className="flex justify-between font-bold text-xl border-t-2 border-black pt-2">
+                                        <span>Grand Total:</span>
+                                        <span>SAR {billToPrint.totalAmount}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-16 text-center text-sm">
+                                <p>Thank you for shopping with ZAHN!</p>
+                                <p>Essence of You.</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
